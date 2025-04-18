@@ -1,0 +1,103 @@
+@startuml code
+
+title С4 Код системы "Умный дом"
+
+package "UserService" {
+
+  class UserController {
+    - service: UserService
+    + getUser(userId: uuid): Response<UserDto>
+    + updateUser(user: UserDto): Response<void>
+    + deleteUser(userId: uuid): Response<void>
+    + refreshPersData(userId: uuid): Response<void>
+    + setUserStatus(userId: uuid, status: String): Response<void>
+    + findUsers(filter: json): Response<Collection<UserDto>>
+  }
+
+  class UserService {
+    - userRepository: UserData
+    + createUser(user: UserDto): uuid
+    + refreshPersData(userId: uuid): void
+    + setUserStatus(userId: uuid, status: String): void
+    + updateUserStatus(userId: uuid, status: String): void
+
+  }
+
+  class UserDao {
+    + findById(userId: uuid): User
+    + findAllByFilter(filter: Specification<User>): List<User>
+    + save(user: User): User
+    + update(user: User): User
+  }
+
+  class PersDataDao {
+    + findById(persDataId: uuid): PersData
+    + findByUserId(userId: uuid): Collection<PersData>
+    + save(persData: PersData): PersData
+    + update(persDataId: uuid, persData: PersData): PersData
+  }
+  class User {
+    - id: uuid
+    - firstName: String
+    - lastName: String
+    - status: Enum
+    - gender: Enum
+    - age: uint
+    - createTime: DateTime
+    - editTime: DateTime
+    + getPersData(): Collection<PersData>
+  }
+
+  class PersData {
+    - id: uuid
+    - idUser: String
+    - persData: jsonb
+    - createTime: DateTime
+    + getUser(): User
+  }
+
+  class UserDto {
+    - id: uuid
+    - firstName: String
+    - lastName: String
+    - status: String
+    - gender: String
+    - age: uint
+    - createTime: DateTime
+    - editTime: DateTime
+    + toString(): String
+  }
+
+  class PersDataDto {
+    - id: uuid
+    - idUser: String
+    - persData: String
+    - createTime: DateTime
+    + toString(): String
+  }
+
+  User "1" -- "1..n" PersData : includes
+  PersDataDao --> PersData : uses
+  UserDao --> User : uses
+  UserService --> UserDao : uses
+  UserService --> PersDataDao : uses
+  UserService --> PersDataDto : uses
+  UserService --> UserDto : uses
+  UserController --> UserService : uses
+}
+
+  User "1" -- "1..n" PersData : includes
+  PersDataDao --> PersData : uses
+  UserDao --> User : uses
+  UserService --> UserDao : uses
+  UserService --> PersDataDao : uses
+  UserService --> PersDataDto : uses
+  UserService --> UserDto : uses
+  UserController --> UserService : uses
+}
+
+
+
+
+@enduml
+

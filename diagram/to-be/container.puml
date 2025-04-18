@@ -1,0 +1,72 @@
+@startuml container
+
+title С4 Уровень контейнеров системы "Умный дом". To-Be
+
+!include diagram\С4_lib\C4_Container.puml
+
+Person(user, "User", "Пользователь системы")
+
+System_Boundary(warmHouse, "Умный дом", "Управление системой умного дома") {
+
+    Container(webApp, "Web application", "React", "Пользовательский интерфейс")
+    Container(webApi, "API Proxy", "Nginx", "API интерфейс")
+
+    Container(apiGateway, "API Gateway", "Nginx", "Маршрутизация запросов, балансировка нагрузки, авторизация")
+    Container(kafkaRestProxy, "Kafka REST Proxy", "Kafka", "Kafka REST Proxy")
+    Container(telemetryService, "Telemetry extractor", "Java", "Представление данных телеметрии")
+    Container(telemetryConveyor, "Telemetry conveyor", "Datadog", "Обработка данных телеметрии")
+
+    Container(messageBroker, "Message Broker", "Apache Kafka", "Для асинхронного взаимодействия внутренних компонентов системы")
+
+    Container(userService, "User service", "Java", "Управление пользовательскими данными")
+    Container(deviceService, "Device service", "Java", "Управление умными устройствами")
+
+    System_Boundary(auth, "Auth", "Аутентификация/авторизация") {
+        Container(userAuth, "Auth user", "Аутентификация и авторизация пользователей")
+        Container(deviceAuth, "Auth device", "Аутентификация и авторизация устройств")
+    }
+
+}
+
+System_Ext(DB, "DB") {
+    ContainerDb(userDb, "Users database", "PostgreSQL")
+    ContainerDb(deviceManagementDb, "Devices database", "PostgreSQL")
+    ContainerDb(telemetryDb, "Telemetry database", "ClickHouse")
+}
+
+System_Ext(devices,  "Подсистемы умного дома") {
+    Container(heating, "Heating device", "Обогреватель")
+    Container(temperatureSensor, "Temperature sensor", "Датчик температуры")
+    Container(lighting, "Lighting", "Световые приборы")
+    Container(video, "Video surveillance", "Видео наблюдение")
+
+}
+
+' User Rels
+Rel(user, webApp, "Uses")
+
+' Routing Rels
+Rel(webApp, apiGateway, "User requests", "REST")
+Rel(apiGateway, userService, "API", "REST")
+Rel(apiGateway, deviceService, "API", "REST")
+Rel(apiGateway, telemetryService, "API", "REST")
+
+' Telemetry Rels
+Rel(devices, webApi, "telemetry", "REST")
+Rel(webApi, apiGateway, "telemetry", "REST")
+Rel(apiGateway, kafkaRestProxy, "telemetry", "REST")
+Rel(kafkaRestProxy, messageBroker, "telemetry", "Kafka")
+Rel(messageBroker, telemetryConveyor, "telemetry", "Kafka")
+
+' DB Rels
+Rel(userService, userDb, "Reads and writes", "JDBC")
+Rel(deviceService, deviceManagementDb, "Reads and writes", "JDBC")
+Rel(telemetryConveyor, telemetryDb, "Writes telemetry", "JDBC")
+Rel(telemetryService, telemetryDb, "Reads telemetry", "JDBC")
+
+' Auth Rels
+Rel(apiGateway, auth, "auth", "REST")
+Rel(auth, userService, "auth user", "REST")
+Rel(auth, deviceService, "auth device", "REST")
+
+@enduml

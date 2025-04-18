@@ -1,0 +1,14 @@
+@startuml ServiceControl
+!include diagram/С4_lib/C4_Component.puml
+
+Container_Boundary(apiGatewayContainer, "API Gateway") {
+    Component(apiGatewayController, "API Gateway", "", "Прием и маршрутизация запросов от внешних устройств и систем")
+}
+
+Container_Ext(userService, "User Service", "Spring Boot", "Управление данными пользователей")
+Container_Ext(houseService, "House Service", "Spring Boot", "Управляет данными о домах, устройствах, сервисах")
+
+Rel(apiGatewayController, userService, "Передача запросов пользователям")
+Rel(apiGatewayController, houseService, "Передача запросов для управления домами")
+
+@enduml
